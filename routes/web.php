@@ -1,9 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\CustomAuthController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\GmailOAuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,4 +42,7 @@ Route::get('employees/search', [EmployeeController::class,'search'])->name('empl
 Route::get('/employees/{id}/edit', [EmployeeController::class,'edit'])->name('employees.edit');
 Route::put('/employees/{id}', [EmployeeController::class,'update'])->name('employees.update');
 Route::delete('/employees/{id}', [EmployeeController::class,'delete'])->name('employees.delete');
+Route::get('gmail', [EmployeeController::class,'gmail'])->name('employees.gmail');
 
+Route::get('/oauth/login', [GmailOAuthController::class,'login'])->name('oauth.login');
+Route::get('/oauth/logout', [GmailOAuthController::class,'logout'])->name('oauth.logout');

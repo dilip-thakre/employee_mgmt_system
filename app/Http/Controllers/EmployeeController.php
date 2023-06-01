@@ -7,6 +7,8 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\EmployeesExport;
+use Google_Client;
+use Google_Service_Gmail;
 
 class EmployeeController extends Controller
 {
@@ -25,6 +27,7 @@ class EmployeeController extends Controller
         $search = $request->input('search');
         $employees = Employee::where('name', 'LIKE', "%$search%")
             ->orWhere('designation', 'LIKE', "%$search%")
+            ->orWhere('manager', 'LIKE', "%$search%")
             ->get();
         return view('layout.dashboard', compact('employees'));
     }
@@ -166,7 +169,14 @@ class EmployeeController extends Controller
         $employee->save();
     
         $employees = Employee::all();
-        return view('layout.dashboard',compact('employees'))->with('success', 'Employee updated successfully.');
+        if(Auth::guard('employee')->check())
+        {
+            $employee = Employee::find($id);
+            return view('layout.dashboard',compact('employee'))->with('success', 'profile updated successfully.');
+        }else
+        {
+            return view('layout.dashboard',compact('employees'))->with('success', 'Employee updated successfully.');
+        }
     }
 
         public function delete($id)
@@ -193,6 +203,33 @@ class EmployeeController extends Controller
 
             // Generate Excel file using EmployeesExport class
             return Excel::download(new EmployeesExport($employees), 'employees.xlsx');
+        }
+
+        public function gmail(Request $request)
+        {
+            $client = new Google_Client();
+            $client->setClientId(config('services.gmail.client_id'));
+            $client->setClientSecret(config('services.gmail.client_secret'));
+            $client->setRedirectUri(config('services.gmail.redirect'));
+            $client->addScope('https://www.googleapis.com/auth/gmail.readonly');
+    
+            // $client->setAccessToken($request->session()->get('gmail_token'));
+    
+            if ($client->isAccessTokenExpired()) {
+                return redirect()->route('oauth.login');
+            }
+    
+            $service = new Google_Service_Gmail($client);
+    
+            $messages = $service->users_messages->listUsersMessages('me', ['labelIds' => 'INBOX']);
+    
+            $emails = [];
+            foreach ($messages->getMessages() as $message) {
+                $email = $service->users_messages->get('me', $message->getId());
+                $emails[] = $email;
+            }
+    
+            return view('employee.gmail', compact('emails'));
         }
 
 }

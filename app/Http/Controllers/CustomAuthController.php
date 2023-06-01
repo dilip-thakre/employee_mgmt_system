@@ -77,7 +77,8 @@ class CustomAuthController extends Controller
             return view('layout.dashboard',compact('employees'));
         }else if((Auth::guard('employee')->check()))
         {
-            return view('layout.dashboard');
+            $employee = Employee::find(Auth::guard('employee')->id());
+            return view('layout.dashboard',compact('employee'));
         }
   
         return redirect("login")->withSuccess('You are not allowed to access');
